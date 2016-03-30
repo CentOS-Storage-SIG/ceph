@@ -1,28 +1,33 @@
 %bcond_with ocf
 %bcond_without cephfs_java
 
-%if ! (0%{?fedora} > 12 || 0%{?rhel} > 5)
+%if (0%{?el5} || (0%{?rhel_version} >= 500 && 0%{?rhel_version} <= 600))
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
 %{!?python_sitearch: %global python_sitearch %(%{__python} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib(1))")}
 %endif
 
 %{!?_udevrulesdir: %global _udevrulesdir /lib/udev/rules.d}
 
-#################################################################################
-# common
-#################################################################################
+# LTTng-UST enabled on Fedora, RHEL 6, and SLES 12
+%if 0%{?fedora} || 0%{?rhel} == 6 || 0%{?suse_version} == 1315
+%global _with_lttng 1
+%endif
+
 Name:		ceph
-Version:	0.94.5
+Version:	0.94.6
 Release:	1%{?dist}
 Epoch:		1
 Summary:	User space components of the Ceph file system
-License:	GPL-2.0
+License:	LGPL-2.1 and CC-BY-SA-1.0 and GPL-2.0 and BSL-1.0 and GPL-2.0-with-autoconf-exception and BSD-3-Clause and MIT
 Group:		System Environment/Base
 URL:		http://ceph.com/
 Source0:	http://ceph.com/download/%{name}-%{version}.tar.bz2
-%if 0%{?fedora} || 0%{?centos} || 0%{?rhel}
+%if 0%{?fedora} || 0%{?rhel}
 Patch0:		init-ceph.in-fedora.patch
 %endif
+#################################################################################
+# dependencies that apply across all distro families
+#################################################################################
 Requires:	librbd1 = %{epoch}:%{version}-%{release}
 Requires:	librados2 = %{epoch}:%{version}-%{release}
 Requires:	libcephfs1 = %{epoch}:%{version}-%{release}
@@ -32,23 +37,28 @@ Requires:	python-rbd = %{epoch}:%{version}-%{release}
 Requires:	python-cephfs = %{epoch}:%{version}-%{release}
 Requires:	python
 Requires:	python-requests
-Requires:	python-flask
+Requires:	grep
 Requires:	xfsprogs
+Requires:	logrotate
 Requires:	parted
 Requires:	util-linux
 Requires:	hdparm
 Requires:	cryptsetup
 Requires(post):	binutils
+%if 0%{with cephfs_java}
+BuildRequires: sharutils
+%endif
 BuildRequires:	gcc-c++
 BuildRequires:	boost-devel
 %if 0%{defined suse_version}
-BuildRequires:	libbz2-devel
+BuildRequires:  libbz2-devel
 %else
-BuildRequires:	bzip2-devel
+BuildRequires:  bzip2-devel
 %endif
 BuildRequires:	cryptsetup
 BuildRequires:	gdbm
 BuildRequires:	hdparm
+BuildRequires:	leveldb-devel > 1.2
 BuildRequires:	libaio-devel
 BuildRequires:	libcurl-devel
 BuildRequires:	libedit-devel
@@ -57,10 +67,9 @@ BuildRequires:	libuuid-devel
 BuildRequires:	libblkid-devel >= 2.17
 BuildRequires:	libudev-devel
 BuildRequires:	libtool
-BuildRequires:	leveldb-devel > 1.2
 BuildRequires:	make
-BuildRequires:	perl
 BuildRequires:	parted
+BuildRequires:	perl
 BuildRequires:	pkgconfig
 BuildRequires:	python
 BuildRequires:	python-nose
@@ -77,13 +86,12 @@ BuildRequires:	net-tools
 %endif
 
 #################################################################################
-# specific
+# distro-conditional dependencies
 #################################################################################
-%if ! 0%{?rhel} || 0%{?fedora}
-BuildRequires:	sharutils
-%endif
-
 %if 0%{defined suse_version}
+Requires:	python-Flask
+BuildRequires:	net-tools
+BuildRequires:	libbz2-devel
 %if 0%{?suse_version} > 1210
 Requires:	gptfdisk
 BuildRequires:	gperftools-devel
@@ -91,7 +99,6 @@ BuildRequires:	gperftools-devel
 Requires:	scsirastools
 BuildRequires:	google-perftools-devel
 %endif
-Recommends:	logrotate
 BuildRequires:	%insserv_prereq
 BuildRequires:	mozilla-nss-devel
 BuildRequires:	keyutils-devel
@@ -106,6 +113,18 @@ Requires(post):	chkconfig
 Requires(preun):chkconfig
 Requires(preun):initscripts
 BuildRequires:	gperftools-devel
+Requires:	python-flask
+%endif
+# lttng and babeltrace for rbd-replay-prep
+%if 0%{?_with_lttng}
+%if 0%{?fedora} || 0%{?rhel}
+BuildRequires:	lttng-ust-devel
+BuildRequires:	libbabeltrace-devel
+%endif
+%if 0%{?suse_version}
+BuildRequires:	lttng-ust-devel
+BuildRequires:  babeltrace-devel
+%endif
 %endif
 
 %description
@@ -126,9 +145,6 @@ Requires:	python-rados = %{epoch}:%{version}-%{release}
 Requires:	python-rbd = %{epoch}:%{version}-%{release}
 Requires:	python-cephfs = %{epoch}:%{version}-%{release}
 Requires:	python-requests
-%if 0%{?rhel} || 0%{?fedora}
-Requires:  redhat-lsb-core
-%endif
 # python-argparse is only needed in distros with Python 2.6 or lower
 %if (0%{?rhel} && 0%{?rhel} <= 6) || (0%{?suse_version} && 0%{?suse_version} <= 1110)
 Requires:	python-argparse
@@ -190,7 +206,7 @@ managers such as Pacemaker.
 Summary:	RADOS distributed object store client library
 Group:		System Environment/Libraries
 License:	LGPL-2.0
-%if 0%{?rhel} || 0%{?centos} || 0%{?fedora}
+%if 0%{?rhel} || 0%{?fedora}
 Obsoletes:	ceph-libs < %{epoch}:%{version}-%{release}
 %endif
 %description -n librados2
@@ -223,7 +239,7 @@ object store.
 Summary:	RADOS striping interface
 Group:		System Environment/Libraries
 License:	LGPL-2.0
-Requires:	librados2 = %{epoch}:%{version}
+Requires:	librados2 = %{epoch}:%{version}-%{release}
 %description -n libradosstriper1
 Striping interface built on top of the rados library, allowing
 to stripe bigger objects onto several standard rados objects using
@@ -245,7 +261,7 @@ Summary:	RADOS block device client library
 Group:		System Environment/Libraries
 License:	LGPL-2.0
 Requires:	librados2 = %{epoch}:%{version}-%{release}
-%if 0%{?rhel} || 0%{?centos} || 0%{?fedora}
+%if 0%{?rhel} || 0%{?fedora}
 Obsoletes:	ceph-libs < %{epoch}:%{version}-%{release}
 %endif
 %description -n librbd1
@@ -280,7 +296,7 @@ block device.
 Summary:	Ceph distributed file system client library
 Group:		System Environment/Libraries
 License:	LGPL-2.0
-%if 0%{?rhel} || 0%{?centos} || 0%{?fedora}
+%if 0%{?rhel} || 0%{?fedora}
 Obsoletes:	ceph-libs < %{epoch}:%{version}-%{release}
 Obsoletes:	ceph-libcephfs
 %endif
@@ -325,17 +341,13 @@ Summary:	Ceph benchmarks and test tools
 Group:		System Environment/Libraries
 License:	LGPL-2.0
 Requires:	ceph-common
-%if (0%{?fedora} >= 20 || 0%{?rhel} == 6)
-BuildRequires:	lttng-ust-devel
-BuildRequires:	libbabeltrace-devel
-%endif
 %description -n ceph-test
 This package contains Ceph benchmarks and test tools.
 
 %if 0%{with cephfs_java}
 
 %package -n libcephfs_jni1
-Summary:	Java Native Interface library for CephFS Java bindings.
+Summary:	Java Native Interface library for CephFS Java bindings
 Group:		System Environment/Libraries
 License:	LGPL-2.0
 Requires:	java
@@ -346,7 +358,7 @@ This package contains the Java Native Interface library for CephFS Java
 bindings.
 
 %package -n libcephfs_jni1-devel
-Summary:	Development files for CephFS Java Native Interface library.
+Summary:	Development files for CephFS Java Native Interface library
 Group:		System Environment/Libraries
 License:	LGPL-2.0
 Requires:	java
@@ -357,7 +369,7 @@ This package contains the development files for CephFS Java Native Interface
 library.
 
 %package -n cephfs-java
-Summary:	Java libraries for the Ceph File System.
+Summary:	Java libraries for the Ceph File System
 Group:		System Environment/Libraries
 License:	LGPL-2.0
 Requires:	java
@@ -367,8 +379,8 @@ BuildRequires:	java-devel
 Requires:	junit4
 BuildRequires:	junit4
 %else
-Requires:	junit
-BuildRequires:	junit
+Requires:       junit
+BuildRequires:  junit
 %endif
 %description -n cephfs-java
 This package contains the Java libraries for the Ceph File System.
@@ -376,7 +388,7 @@ This package contains the Java libraries for the Ceph File System.
 %endif
 
 %package libs-compat
-Summary:	Meta package to include ceph libraries.
+Summary:	Meta package to include ceph libraries
 Group:		System Environment/Libraries
 License:	LGPL-2.0
 Obsoletes:	ceph-libs
@@ -436,7 +448,7 @@ python-cephfs instead.
 #################################################################################
 %prep
 %setup -q
-%if 0%{?fedora} || 0%{?rhel} || 0%{?centos}
+%if 0%{?fedora} || 0%{?rhel}
 %patch0 -p1 -b .init
 %endif
 
@@ -529,8 +541,10 @@ mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/ceph/tmp
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/ceph/mon
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/ceph/osd
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/ceph/mds
+mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/ceph/radosgw
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/ceph/bootstrap-osd
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/ceph/bootstrap-mds
+mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/ceph/bootstrap-rgw
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/log/radosgw
 
 %clean
@@ -613,6 +627,10 @@ fi
 %{_libdir}/rados-classes/libcls_version.so*
 %dir %{_libdir}/ceph/erasure-code
 %{_libdir}/ceph/erasure-code/libec_*.so*
+%if 0%{?_with_lttng}
+%{_libdir}/libos_tp.so*
+%{_libdir}/libosd_tp.so*
+%endif
 %{_udevrulesdir}/60-ceph-partuuid-workaround.rules
 %{_udevrulesdir}/95-ceph-osd.rules
 %config %{_sysconfdir}/bash_completion.d/ceph
@@ -646,6 +664,7 @@ fi
 %dir %{_localstatedir}/lib/ceph/bootstrap-osd
 %dir %{_localstatedir}/lib/ceph/bootstrap-mds
 %ghost %dir %{_localstatedir}/run/ceph/
+%dir %{_localstatedir}/lib/ceph/bootstrap-rgw
 
 #################################################################################
 %files -n ceph-common
@@ -659,6 +678,11 @@ fi
 %{_bindir}/ceph-crush-location
 %{_bindir}/rados
 %{_bindir}/rbd
+%{_bindir}/rbd-replay
+%{_bindir}/rbd-replay-many
+%if 0%{?_with_lttng}
+%{_bindir}/rbd-replay-prep
+%endif
 %{_bindir}/ceph-post-file
 %{_bindir}/ceph-brag
 %{_mandir}/man8/ceph-authtool.8*
@@ -670,11 +694,16 @@ fi
 %{_mandir}/man8/ceph.8*
 %{_mandir}/man8/rados.8*
 %{_mandir}/man8/rbd.8*
+%{_mandir}/man8/rbd-replay.8*
+%{_mandir}/man8/rbd-replay-many.8*
+%{_mandir}/man8/rbd-replay-prep.8*
 %{_datadir}/ceph/known_hosts_drop.ceph.com
 %{_datadir}/ceph/id_dsa_drop.ceph.com
 %{_datadir}/ceph/id_dsa_drop.ceph.com.pub
 %dir %{_sysconfdir}/ceph/
 %dir %{_localstatedir}/log/ceph/
+%dir %{_datarootdir}/ceph/
+%dir %{_libexecdir}/ceph/
 %config %{_sysconfdir}/bash_completion.d/rados
 %config %{_sysconfdir}/bash_completion.d/rbd
 %config(noreplace) %{_sysconfdir}/ceph/rbdmap
@@ -718,6 +747,7 @@ fi
 %config(noreplace) %{_sysconfdir}/logrotate.d/radosgw
 %config %{_sysconfdir}/bash_completion.d/radosgw-admin
 %dir %{_localstatedir}/log/radosgw/
+%dir %{_localstatedir}/lib/ceph/radosgw
 
 %post radosgw
 /sbin/ldconfig
@@ -746,16 +776,19 @@ fi
 %if %{with ocf}
 %files resource-agents
 %defattr(0755,root,root,-)
-%dir %{_libdir}/ocf
-%dir %{_libdir}/ocf/resource.d
-%dir %{_libdir}/ocf/resource.d/ceph
-%{_libdir}/ocf/resource.d/%{name}/*
+%dir /usr/lib/ocf
+%dir /usr/lib/ocf/resource.d
+%dir /usr/lib/ocf/resource.d/ceph
+/usr/lib/ocf/resource.d/%{name}/*
 %endif
 
 #################################################################################
 %files -n librados2
 %defattr(-,root,root,-)
 %{_libdir}/librados.so.*
+%if 0%{?_with_lttng}
+%{_libdir}/librados_tp.so.*
+%endif
 
 %post -n librados2
 /sbin/ldconfig
@@ -776,6 +809,9 @@ fi
 %{_includedir}/rados/rados_types.hpp
 %{_includedir}/rados/memory.h
 %{_libdir}/librados.so
+%if 0%{?_with_lttng}
+%{_libdir}/librados_tp.so
+%endif
 
 #################################################################################
 %files -n python-rados
@@ -805,6 +841,9 @@ fi
 %files -n librbd1
 %defattr(-,root,root,-)
 %{_libdir}/librbd.so.*
+%if 0%{?_with_lttng}
+%{_libdir}/librbd_tp.so.*
+%endif
 
 %post -n librbd1
 /sbin/ldconfig
@@ -822,6 +861,9 @@ ln -sf %{_libdir}/librbd.so.1 /usr/lib64/qemu/librbd.so.1
 %{_includedir}/rbd/librbd.hpp
 %{_includedir}/rbd/features.h
 %{_libdir}/librbd.so
+%if 0%{?_with_lttng}
+%{_libdir}/librbd_tp.so
+%endif
 
 #################################################################################
 %files -n python-rbd
@@ -883,20 +925,18 @@ ln -sf %{_libdir}/librbd.so.1 /usr/lib64/qemu/librbd.so.1
 %{_bindir}/ceph-monstore-tool
 %{_bindir}/ceph-osdomap-tool
 %{_bindir}/ceph-kvstore-tool
-%{_mandir}/man8/rbd-replay.8*
-%{_mandir}/man8/rbd-replay-many.8*
-%{_mandir}/man8/rbd-replay-prep.8*
-%{_bindir}/rbd-replay
-%{_bindir}/rbd-replay-many
-%if (0%{?fedora} >= 20 || 0%{?rhel} == 6)
-%{_bindir}/rbd-replay-prep
-%endif
 
 #################################################################################
 %if 0%{with cephfs_java}
 %files -n libcephfs_jni1
 %defattr(-,root,root,-)
 %{_libdir}/libcephfs_jni.so.*
+
+%post -n libcephfs_jni1
+/sbin/ldconfig
+
+%postun -n libcephfs_jni1
+/sbin/ldconfig
 
 #################################################################################
 %files -n libcephfs_jni1-devel
@@ -926,11 +966,14 @@ ln -sf %{_libdir}/librbd.so.1 /usr/lib64/qemu/librbd.so.1
 # actually build this meta package.
 
 %changelog
-* Fri Jan 22 2016 François Cami <fcami@redhat.com> - 0.94.5-1
+* Wed Mar 30 2016 François Cami <fcami@fedoraproject.org> - 1:0.94.6-1
+- import upstream's 1:0.94.6-0
+
+* Fri Jan 22 2016 François Cami <fcami@redhat.com> - 1:0.94.5-1
 - add changelog
 - /usr/lib => _libdir macro
 
-* Wed Oct 28 2015 Lincoln Bryant <lincolnb@uchicago.edu> - 0.94.5-0
+* Wed Oct 28 2015 Lincoln Bryant <lincolnb@uchicago.edu> - 1:0.94.5-0
 - initial CentOS build
 - use upstream (ceph.com) ceph.spec
 
