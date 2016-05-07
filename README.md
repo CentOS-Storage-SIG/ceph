@@ -3,8 +3,8 @@ This is a dist-git like repo for [Ceph](https://github.com/ceph/ceph).
 The master branch is unused. Use an existing branch instead.
 [Branch names](https://wiki.centos.org/BrianStinson/GitBranchesandKojiTags):
 
-* sig-storage7-ceph-hammer : Ceph Hammer (0.94.x) for CentOS-7
-* ...
+* sig-storage7-ceph-hammer : Ceph Hammer (0.94.x) for CentOS 7
+* sig-storage7-ceph-jewel  : Ceph Jewel  (10.2.x) for CentOS 7
 
 Instructions for building the Ceph package for the CentOS Storage SIG can be found in the following places:
 
