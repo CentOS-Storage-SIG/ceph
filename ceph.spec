@@ -13,7 +13,7 @@
 # This file is under the GNU Lesser General Public License, version 2.1
 #
 # Please submit bugfixes or comments via http://tracker.ceph.com/
-# 
+#
 %bcond_with ocf
 %bcond_without cephfs_java
 %bcond_with tests
@@ -33,9 +33,11 @@
 %bcond_with selinux
 %endif
 
-# LTTng-UST enabled on Fedora, RHEL 6+, and SLES 12
-%if 0%{?fedora} || 0%{?rhel} >= 6 || 0%{?suse_version} == 1315
+# LTTng-UST enabled on Fedora, RHEL 6+, and SLE (not openSUSE)
+%if 0%{?fedora} || 0%{?rhel} >= 6 || 0%{?suse_version}
+%if ! 0%{?is_opensuse}
 %bcond_without lttng
+%endif
 %endif
 
 %if %{with selinux}
@@ -54,7 +56,7 @@
 # common
 #################################################################################
 Name:		ceph
-Version:	10.2.3
+Version:	10.2.5
 Release:	0%{?dist}
 Epoch:		1
 Summary:	User space components of the Ceph file system
@@ -116,6 +118,7 @@ BuildRequires:	python-requests
 BuildRequires:	python-sphinx
 BuildRequires:	python-virtualenv
 BuildRequires:	snappy-devel
+BuildRequires:	udev
 BuildRequires:	util-linux
 BuildRequires:	valgrind-devel
 BuildRequires:	xfsprogs
@@ -142,7 +145,7 @@ BuildRequires:  lsb-release
 BuildRequires:  openldap2-devel
 BuildRequires:	python-Cython
 %endif
-%if 0%{?fedora} || 0%{?rhel} 
+%if 0%{?fedora} || 0%{?rhel}
 Requires:	systemd
 BuildRequires:  boost-random
 BuildRequires:	btrfs-progs
@@ -878,8 +881,8 @@ DISABLE_RESTART_ON_UPDATE="yes"
 %{_mandir}/man8/rbd-replay-prep.8*
 %dir %{_datadir}/ceph/
 %{_datadir}/ceph/known_hosts_drop.ceph.com
-%{_datadir}/ceph/id_dsa_drop.ceph.com
-%{_datadir}/ceph/id_dsa_drop.ceph.com.pub
+%{_datadir}/ceph/id_rsa_drop.ceph.com
+%{_datadir}/ceph/id_rsa_drop.ceph.com.pub
 %dir %{_sysconfdir}/ceph/
 %config %{_sysconfdir}/bash_completion.d/rados
 %config %{_sysconfdir}/bash_completion.d/rbd
@@ -887,6 +890,7 @@ DISABLE_RESTART_ON_UPDATE="yes"
 %{_unitdir}/rbdmap.service
 %{python_sitelib}/ceph_argparse.py*
 %{python_sitelib}/ceph_daemon.py*
+%dir %{_udevrulesdir}
 %{_udevrulesdir}/50-rbd.rules
 %attr(3770,ceph,ceph) %dir %{_localstatedir}/log/ceph/
 %attr(750,ceph,ceph) %dir %{_localstatedir}/lib/ceph/
@@ -910,7 +914,7 @@ if ! getent passwd ceph >/dev/null ; then
     useradd ceph $CEPH_USER_ID_OPTION -r -g ceph -s /sbin/nologin 2>/dev/null || :
 fi
 usermod -c "Ceph storage service" \
-        -d %{_localstatedir}/lib/ceph \   
+        -d %{_localstatedir}/lib/ceph \
         -g ceph \
         -s /sbin/nologin \
         ceph
@@ -1156,6 +1160,7 @@ fi
 %{_sbindir}/ceph-disk
 %{_sbindir}/ceph-disk-udev
 %{_libexecdir}/ceph/ceph-osd-prestart.sh
+%dir %{_udevrulesdir}
 %{_udevrulesdir}/60-ceph-by-parttypeuuid.rules
 %{_udevrulesdir}/95-ceph-osd.rules
 %{_mandir}/man8/ceph-clsinfo.8*
@@ -1527,6 +1532,9 @@ exit 0
 
 
 %changelog
+* Thu Jan 26 2017 David Moreau Simard <dmsimard@redhat.com> - 1:10.2.5-0
+- import upstream's 1:10.2.5-0
+
 * Wed Sep 28 2016 François Cami <fcami@fedoraproject.org> - 1:10.2.3-0
 - import upstream's 1:10.2.3-0
 
@@ -1538,4 +1546,3 @@ exit 0
 
 * Sat May 07 2016 François Cami <fcami@fedoraproject.org> - 1:10.2.0-0
 - import upstream's 1:10.2.0-0
-
