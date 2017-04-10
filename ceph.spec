@@ -56,7 +56,7 @@
 # common
 #################################################################################
 Name:		ceph
-Version:	10.2.5
+Version:	10.2.7
 Release:	0%{?dist}
 Epoch:		1
 Summary:	User space components of the Ceph file system
@@ -145,7 +145,7 @@ BuildRequires:  lsb-release
 BuildRequires:  openldap2-devel
 BuildRequires:	python-Cython
 %endif
-%if 0%{?fedora} || 0%{?rhel}
+%if 0%{?fedora} || 0%{?rhel} 
 Requires:	systemd
 BuildRequires:  boost-random
 BuildRequires:	btrfs-progs
@@ -216,11 +216,7 @@ Requires:      cryptsetup
 Requires:      findutils
 Requires:      which
 %if 0%{?suse_version}
-Requires:      lsb-release
 Recommends:    ntp-daemon
-%endif
-%if 0%{?fedora} || 0%{?rhel}
-Requires:      redhat-lsb-core
 %endif
 %if 0%{with xio}
 Requires:      libxio
@@ -700,7 +696,7 @@ make %{?_smp_mflags} check
 make DESTDIR=%{buildroot} install
 find %{buildroot} -type f -name "*.la" -exec rm -f {} ';'
 find %{buildroot} -type f -name "*.a" -exec rm -f {} ';'
-install -D src/etc-rbdmap %{buildroot}%{_sysconfdir}/ceph/rbdmap
+install -m 0644 -D src/etc-rbdmap %{buildroot}%{_sysconfdir}/ceph/rbdmap
 %if 0%{?fedora} || 0%{?rhel}
 install -m 0644 -D etc/sysconfig/ceph %{buildroot}%{_sysconfdir}/sysconfig/ceph
 %endif
@@ -914,7 +910,7 @@ if ! getent passwd ceph >/dev/null ; then
     useradd ceph $CEPH_USER_ID_OPTION -r -g ceph -s /sbin/nologin 2>/dev/null || :
 fi
 usermod -c "Ceph storage service" \
-        -d %{_localstatedir}/lib/ceph \
+        -d %{_localstatedir}/lib/ceph \   
         -g ceph \
         -s /sbin/nologin \
         ceph
@@ -1532,6 +1528,9 @@ exit 0
 
 
 %changelog
+* Mon Apr 10 2017 David Moreau Simard <dmsimard@redhat.com> - 1:10.2.7-0
+- import upstream's 1:10.2.7-0
+
 * Thu Jan 27 2017 David Moreau Simard <dmsimard@redhat.com> - 1:10.2.5-0
 - import upstream's 1:10.2.5-0
 
