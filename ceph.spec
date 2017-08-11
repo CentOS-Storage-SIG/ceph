@@ -14,7 +14,7 @@
 #
 # Please submit bugfixes or comments via http://tracker.ceph.com/
 # 
-%bcond_with ocf
+%bcond_without ocf
 %bcond_without cephfs_java
 %bcond_with tests
 %bcond_with xio
@@ -56,7 +56,7 @@
 # common
 #################################################################################
 Name:		ceph
-Version:	10.2.7
+Version:	10.2.9
 Release:	0%{?dist}
 Epoch:		1
 Summary:	User space components of the Ceph file system
@@ -214,6 +214,7 @@ Requires:      util-linux
 Requires:      hdparm
 Requires:      cryptsetup
 Requires:      findutils
+Requires:      psmisc
 Requires:      which
 %if 0%{?suse_version}
 Recommends:    ntp-daemon
@@ -667,11 +668,13 @@ export RPM_OPT_FLAGS=`echo $RPM_OPT_FLAGS | sed -e 's/i386/i486/'`
 		--without-lttng \
 		--without-babeltrace \
 %endif
-		$CEPH_EXTRA_CONFIGURE_ARGS \
-		%{?_with_ocf} \
+%if 0%{with ocf}
+		--with-ocf \
+%endif
 %if %{without tcmalloc}
 		--without-tcmalloc \
 %endif
+		$CEPH_EXTRA_CONFIGURE_ARGS \
 		CFLAGS="$RPM_OPT_FLAGS" CXXFLAGS="$RPM_OPT_FLAGS"
 
 %if %{with lowmem_builder}
@@ -1528,6 +1531,9 @@ exit 0
 
 
 %changelog
+* Fri Aug 11 2017 David Moreau Simard <dmsimard@redhat.com> - 1:10.2.9-0
+- import upstream's 1:10.2.9-0
+
 * Mon Apr 10 2017 David Moreau Simard <dmsimard@redhat.com> - 1:10.2.7-0
 - import upstream's 1:10.2.7-0
 
