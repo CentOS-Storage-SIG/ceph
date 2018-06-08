@@ -55,11 +55,7 @@
 %global _defined_if_python2_absent 1
 %endif
 
-%if 0%{?rhel}
-%global _python_buildid ''
-%else
 %global _python_buildid %{?_defined_if_python2_absent:%{python3_pkgversion}}
-%endif
 
 %if %{with selinux}
 # get selinux policy version
@@ -215,6 +211,7 @@ BuildRequires:	python%{_python_buildid}-sphinx
 BuildRequires:	lz4-devel >= 1.7
 %endif
 # python34-... for RHEL, python3-... for all other supported distros
+%if 0%{?!with_python2:1}
 %if 0%{?rhel}
 BuildRequires:	python34-devel
 BuildRequires:	python34-setuptools
@@ -223,6 +220,7 @@ BuildRequires:	python34-Cython
 BuildRequires:	python3-devel
 BuildRequires:	python3-setuptools
 BuildRequires:	python3-Cython
+%endif
 %endif
 # distro-conditional make check dependencies
 %if 0%{with make_check}
@@ -564,7 +562,6 @@ Requires:	python%{python3_pkgversion}-rados = %{_epoch_prefix}%{version}-%{relea
 This package contains Python 3 libraries for interacting with Cephs RADOS
 gateway.
 %endif
-%endif
 
 %if 0%{with python2}
 %package -n python-rados
@@ -577,8 +574,6 @@ Obsoletes:	python-ceph < %{_epoch_prefix}%{version}-%{release}
 %description -n python-rados
 This package contains Python 2 libraries for interacting with Cephs RADOS
 object store.
-%endif
-
 %else
 %package -n python%{python3_pkgversion}-rados
 Summary:	Python 3 libraries for the RADOS object store
@@ -590,7 +585,6 @@ Requires:	librados2 = %{_epoch_prefix}%{version}-%{release}
 %description -n python%{python3_pkgversion}-rados
 This package contains Python 3 libraries for interacting with Cephs RADOS
 object store.
-%endif
 %endif
 
 %package -n libradosstriper1
@@ -662,7 +656,6 @@ Obsoletes:	python-ceph < %{_epoch_prefix}%{version}-%{release}
 %description -n python-rbd
 This package contains Python 2 libraries for interacting with Cephs RADOS
 block device.
-%endif
 
 %else
 %package -n python%{python3_pkgversion}-rbd
@@ -675,7 +668,6 @@ Requires:	python%{python3_pkgversion}-rados = %{_epoch_prefix}%{version}-%{relea
 %description -n python%{python3_pkgversion}-rbd
 This package contains Python 3 libraries for interacting with Cephs RADOS
 block device.
-%endif
 %endif
 
 %package -n libcephfs2
@@ -722,7 +714,6 @@ Obsoletes:	python-ceph < %{_epoch_prefix}%{version}-%{release}
 %description -n python-cephfs
 This package contains Python 2 libraries for interacting with Cephs distributed
 file system.
-%endif
 
 %else
 %package -n python%{python3_pkgversion}-cephfs
@@ -735,7 +726,6 @@ Requires:	python%{python3_pkgversion}-rados = %{_epoch_prefix}%{version}-%{relea
 %description -n python%{python3_pkgversion}-cephfs
 This package contains Python 3 libraries for interacting with Cephs distributed
 file system.
-%endif
 %endif
 
 %if 0%{with python2}
