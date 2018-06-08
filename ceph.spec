@@ -55,8 +55,6 @@
 %global _defined_if_python2_absent 1
 %endif
 
-%global _python_buildid %{?_defined_if_python2_absent:%{python3_pkgversion}}
-
 %if %{with selinux}
 # get selinux policy version
 %{!?_selinux_policy_version: %global _selinux_policy_version 0.0.0}
@@ -67,7 +65,7 @@
 %{!?python3_pkgversion: %global python3_pkgversion 3}
 # define _python_buildid macro which will expand to the empty string when
 # building with python2
-
+%global _python_buildid %{?_defined_if_python2_absent:%{python3_pkgversion}}
 
 # unify libexec for all targets
 %global _libexecdir %{_exec_prefix}/lib

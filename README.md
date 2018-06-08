@@ -1,4 +1,4 @@
-CentOS Storage SIG: Ceph Mimic
+CentOS Storage SIG: Ceph Mimic (WORK IN PROGRESS)
 ==============================
 The [CentOS Storage SIG for Ceph](https://wiki.centos.org/SpecialInterestGroup/Storage/)
 used to maintain a dist-git like repository here in order to package and mirror
@@ -6,6 +6,9 @@ Ceph for the CentOS community.
 
 We have since then decided to re-build Ceph from the source RPMs provided
 [straight from upstream](http://download.ceph.com/rpm-mimic/el7/SRPMS/).
+
+Please note the following changes have been applied:
+- disabled python3 (no dependency on epel for cbs.centos.org therfore no python34 available)
 
 The spec file is kept here and versioned for reference purposes.
 
