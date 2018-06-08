@@ -9,6 +9,7 @@ We have since then decided to re-build Ceph from the source RPMs provided
 
 Please note the following changes have been applied:
 - disabled python3 (no dependency on epel for cbs.centos.org therfore no python34 available)
+- limit make -j to 8 (otherwise "cc1plus invoked oom-killer: gfp_mask=0x24201ca, order=0, oom_score_adj=0"). lowmem option not available anymore.
 
 The spec file is kept here and versioned for reference purposes.
 

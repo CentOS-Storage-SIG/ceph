@@ -871,7 +871,7 @@ export CFLAGS="$RPM_OPT_FLAGS"
 export CXXFLAGS="$RPM_OPT_FLAGS"
 
 # Parallel build settings ...
-CEPH_MFLAGS_JOBS="%{?_smp_mflags}"
+CEPH_MFLAGS_JOBS="-j8"
 CEPH_SMP_NCPUS=$(echo "$CEPH_MFLAGS_JOBS" | sed 's/-j//')
 %if 0%{?__isa_bits} == 32
 # 32-bit builds can use 3G memory max, which is not enough even for -j2
