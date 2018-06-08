@@ -1,11 +1,11 @@
-CentOS Storage SIG: Ceph Jewel
+CentOS Storage SIG: Ceph Mimic
 ==============================
 The [CentOS Storage SIG for Ceph](https://wiki.centos.org/SpecialInterestGroup/Storage/)
 used to maintain a dist-git like repository here in order to package and mirror
 Ceph for the CentOS community.
 
 We have since then decided to re-build Ceph from the source RPMs provided
-[straight from upstream](http://download.ceph.com/rpm-jewel/el7/SRPMS/).
+[straight from upstream](http://download.ceph.com/rpm-mimic/el7/SRPMS/).
 
 The spec file is kept here and versioned for reference purposes.
 
@@ -24,8 +24,7 @@ directly in the CBS interface.
 
 Package and mirror availability
 -------------------------------
-Installing the package **centos-release-ceph-jewel** from CentOS extras will
-provide the stable and testing repositories for the Jewel release of Ceph.
+Installing the package **centos-release-ceph-mimic** from CentOS extras will
+provide the stable and testing repositories for the Mimic release of Ceph.
 
 The testing repository is disabled by default but you can enable it to test an
-upcoming release.
